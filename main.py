@@ -1,15 +1,15 @@
+import datetime
 import time
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import undetected_chromedriver
 
 
-def collect_url(url, last_page):
+def collect_url(url):
     driver = undetected_chromedriver.Chrome()
     driver.maximize_window()
     try:
@@ -30,17 +30,38 @@ def collect_url(url, last_page):
                 n += 1
                 continue
         time.sleep(2)
-        if driver.current_url == "https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p=1&region=4897" \
-                or driver.current_url == "https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p=1&region=4897":
-            if last_page[0]:
-                last_page[1] = True
-            last_page[0] = True
-            print("last page")
-        if last_page[1]:
-            print("last")
+
+        page_number = 1
+        last_page = False
+
+        while True:
+            full_block = driver.find_element(By.CLASS_NAME, "_93444fe79c--wrapper--W0WqH")
+            blocks = full_block.find_elements(By.CLASS_NAME, "_93444fe79c--container--Povoi._93444fe79c--cont--OzgVc")
+            list_urls = []
+            for item in blocks:
+                find_href = item.find_element(By.CLASS_NAME, "_93444fe79c--link--eoxce")
+                href = find_href.get_attribute("href")
+                list_urls.append(href)
+                with open(f"{datetime.date.today()}.txt", "a", encoding="utf-8") as file:
+                    file.write((list_urls[item in list_urls]) + '\n')
+            original_window = driver.current_window_handle
+            driver.switch_to.new_window('tab')
+            driver.switch_to.window(original_window)
             driver.close()
-            driver.quit()
-            return last_page
+            driver.switch_to.window(driver.window_handles[0])
+            if url == "https://novosibirsk.cian.ru/kupit-kvartiru-novostroyki/":
+                url2 = f"https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p={1 + page_number}&region=4897"
+            if url == "https://novosibirsk.cian.ru/kupit-kvartiru-vtorichka/":
+                url2 = f"https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p={1 + page_number}&region=4897"
+            driver.get(url2)
+            time.sleep(1)
+            page_number += 1
+            if driver.current_url == "https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p=1&region=4897" \
+                    or driver.current_url == "https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p=1&region=4897":
+                last_page = True
+            if last_page:
+                print("Last page")
+                break
     except Exception as ex:
         print(ex)
     finally:
@@ -49,30 +70,10 @@ def collect_url(url, last_page):
 
 
 def main():
-    # url = "https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&offer_type=flat&p=2&region=4897"
-    page_number = 0
-    last_page = [False, False]
-    while True:
-        if last_page[1]:
-            break
-        print(last_page[1])
-        url = f"https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p={page_number + 1}&region=4897"
-        try:
-            collect_url(url, last_page)
-            page_number += 1
-        except:
-            continue
-    page_number2 = 0
-    last_page = [False, False]
-    while True:
-        if last_page[1]:
-            break
-        url = f"https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p={page_number2 + 1}&region=4897"
-        try:
-            collect_url(url, last_page)
-            page_number2 += 1
-        except:
-            continue
+    collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-novostroyki/")
+
+    collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-vtorichka/")
+
     # https://novosibirsk.cian.ru/kupit-kvartiru/
 
 
