@@ -76,21 +76,120 @@ def collect_url(url):
 def get_data():
     with open("2022-08-25.txt", encoding="utf-8") as file:
         list_position = file.read().splitlines()
-    for url in list_position:
-        print(url)
-        with requests.Session() as connection:
-            connection.headers.update(
-                {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
-                    "accept": "accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                }
-            )
+    # for url in list_position:
+    #     print(url)
+    #     with requests.Session() as connection:
+    #         connection.headers.update(
+    #             {
+    #                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    #                 "accept": "accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    #             }
+    #         )
+    #
+    #         response = connection.get(url)
+    #         print(response.status_code)
+    #         time.sleep(1)
+    #
+    #         soup = BeautifulSoup(response.text, "lxml")
+    url = "https://novosibirsk.cian.ru/sale/flat/277354561/"
+    # url = "https://novosibirsk.cian.ru/sale/flat/277353551/"
+    with requests.Session() as connection:
+        connection.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+                "accept": "accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            }
+        )
 
-            response = connection.get(url)
-            print(response.status_code)
-            time.sleep(1)
+        response = connection.get(url)
+        print(response.status_code)
+        soup = BeautifulSoup(response.text, "lxml")
 
-            soup = BeautifulSoup(response.text, "lxml")
+        # price
+        block_with_price = soup.find("span", class_="a10a3f92e9--price_value--lqIK0")
+        block_with_price2 = block_with_price.find("span")
+        price = block_with_price2.get("content")[:-2].replace(' ', '')
+        # print(int(price))
+
+        general_block = soup.find("div", class_="a10a3f92e9--info-block--kXrDj")
+
+        # total_area
+        block_with_total_area = general_block.find("div", class_="a10a3f92e9--info-value--bm3DC")
+        total_area = block_with_total_area.string.split()
+        # print(total_area[0])
+
+        # floors_num
+        block_with_floors_num_title = general_block.find_all("div", class_="a10a3f92e9--info-title--JWtIm")
+        index_title = 0
+        for item in block_with_floors_num_title:
+            if item.string == "Этаж":
+                index_title = block_with_floors_num_title.index(item)
+                break
+        block_with_floors_num = general_block.find_all("div", class_="a10a3f92e9--info-value--bm3DC")
+        floors_num = block_with_floors_num[index_title].string.split(' ')
+        # print(int(floors_num[0]))
+
+        # floors_count
+        floors_count = block_with_floors_num[index_title].string.split(' ')
+        # print(int(floors_count[-1]))
+
+        # category
+        if soup.find("div",
+                     class_="a10a3f92e9--button--OUjNH a10a3f92e9--offer_card_page-bti--spgEZ a10a3f92e9--collapsed-block-header--YjVTc "
+                            "a10a3f92e9--offer_card_block--no-margin--Qa9YL a10a3f92e9--offer_card_block--no-borderradius--xJTgJ"):
+            category = "newBuildingFlatSale"
+        else:
+            category = "flatSale"
+        # print(category)
+
+        # offer_id
+        offer_id = url.split('/')
+        # print(offer_id[-2])
+
+        # address
+        geo = soup.find("div", class_="a10a3f92e9--geo--VTC9X")
+        geo2 = geo.find("span")
+        address = geo2.get("content")
+        # print(address)
+
+        # location
+        location = address.split(',')[1]
+
+        # year_house
+        year_house = soup.find("span", class_="a10a3f92e9--status--PGvAt")
+        # print(int(year_house.string.split()[-1]))
+
+        # url house
+        url_house = soup.find("a", class_="a10a3f92e9--link--ulbh5 a10a3f92e9--link--hZEYa").get("href")
+        # print(url_house)
+
+        response = connection.get(url_house)
+        print(response.status_code)
+        soup = BeautifulSoup(response.text, "lxml")
+
+        # house_material_type
+        if category == "newBuildingFlatSale":
+            text = soup.find_all("div", class_="_7a3fb80146--text--EL3wJ")
+            index_text = 0
+            for item in text:
+                span = item.find("span")
+                if span.string == "Тип дома":
+                    index_text = text.index(item)
+                    break
+            value = soup.find_all("div", class_="_7a3fb80146--value--wcB9F")
+            house_material_type = value[index_text].string
+            # print(house_material_type)
+        if category == "flatSale":
+            text = soup.find_all("div", class_="_02712f2b3b--text--EL3wJ")
+            index_text = 0
+            for item in text:
+                span = item.find("span")
+                if span.string == "Тип дома":
+                    index_text = text.index(item)
+                    break
+            value = soup.find_all("div", class_="_02712f2b3b--value--wcB9F")
+            house_material_type = value[index_text].string
+            # print(house_material_type)
 
 
 def main():

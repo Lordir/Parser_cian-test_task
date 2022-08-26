@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, DECIMAL
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import create_engine
 from sqlalchemy.sql import func
@@ -24,12 +24,11 @@ class Object(Base):
     id = Column(Integer, primary_key=True)
     category = Column(String, nullable=False)
     price = Column(Integer, nullable=False)
-    total_area = Column(Integer, nullable=False)
+    total_area = Column(DECIMAL(5, 2), nullable=False)
     floor_num = Column(Integer, nullable=False)
     created_on = Column(DateTime(timezone=True), server_default=func.now())
     updated_on = Column(DateTime(timezone=True), onupdate=func.now())
     offer_id = Column(Integer, nullable=False)
-    # house = relationship("House", back_populates="object")
     house_id = Column(Integer, ForeignKey("houses.id"))
 
 
