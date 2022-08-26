@@ -7,6 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import undetected_chromedriver
+from decimal import Decimal
+from work_with_bd import add_to_db
 
 
 def collect_url(url):
@@ -91,8 +93,9 @@ def get_data():
     #         time.sleep(1)
     #
     #         soup = BeautifulSoup(response.text, "lxml")
-    url = "https://novosibirsk.cian.ru/sale/flat/277354561/"
+    # url = "https://novosibirsk.cian.ru/sale/flat/277354561/"
     # url = "https://novosibirsk.cian.ru/sale/flat/277353551/"
+    url = "https://novosibirsk.cian.ru/sale/flat/269329834/"
     with requests.Session() as connection:
         connection.headers.update(
             {
@@ -103,22 +106,27 @@ def get_data():
 
         response = connection.get(url)
         print(response.status_code)
+        time.sleep(1)
         soup = BeautifulSoup(response.text, "lxml")
+
+        for_object = {}
+        for_house = {}
 
         # price
         block_with_price = soup.find("span", class_="a10a3f92e9--price_value--lqIK0")
         block_with_price2 = block_with_price.find("span")
         price = block_with_price2.get("content")[:-2].replace(' ', '')
-        # print(int(price))
+        for_object["price"] = int(price)
 
         general_block = soup.find("div", class_="a10a3f92e9--info-block--kXrDj")
 
         # total_area
         block_with_total_area = general_block.find("div", class_="a10a3f92e9--info-value--bm3DC")
         total_area = block_with_total_area.string.split()
-        # print(total_area[0])
+        for_object["total_area"] = Decimal(total_area[0].replace(',', '.'))
+        # for_object["total_area"] = total_area[0]
 
-        # floors_num
+        # floor_num
         block_with_floors_num_title = general_block.find_all("div", class_="a10a3f92e9--info-title--JWtIm")
         index_title = 0
         for item in block_with_floors_num_title:
@@ -126,12 +134,12 @@ def get_data():
                 index_title = block_with_floors_num_title.index(item)
                 break
         block_with_floors_num = general_block.find_all("div", class_="a10a3f92e9--info-value--bm3DC")
-        floors_num = block_with_floors_num[index_title].string.split(' ')
-        # print(int(floors_num[0]))
+        floor_num = block_with_floors_num[index_title].string.split(' ')
+        for_object["floor_num"] = int(floor_num[0])
 
         # floors_count
         floors_count = block_with_floors_num[index_title].string.split(' ')
-        # print(int(floors_count[-1]))
+        for_house["floors_count"] = int(floors_count[-1])
 
         # category
         if soup.find("div",
@@ -140,28 +148,28 @@ def get_data():
             category = "newBuildingFlatSale"
         else:
             category = "flatSale"
-        # print(category)
+        for_object["category"] = category
 
         # offer_id
         offer_id = url.split('/')
-        # print(offer_id[-2])
+        for_object["offer_id"] = int(offer_id[-2])
 
         # address
         geo = soup.find("div", class_="a10a3f92e9--geo--VTC9X")
         geo2 = geo.find("span")
         address = geo2.get("content")
-        # print(address)
+        for_house["address"] = address
 
         # location
         location = address.split(',')[1]
+        for_house["location"] = location
 
         # year_house
         year_house = soup.find("span", class_="a10a3f92e9--status--PGvAt")
-        # print(int(year_house.string.split()[-1]))
+        for_house["year_house"] = int(year_house.string.split()[-1])
 
         # url house
         url_house = soup.find("a", class_="a10a3f92e9--link--ulbh5 a10a3f92e9--link--hZEYa").get("href")
-        # print(url_house)
 
         response = connection.get(url_house)
         print(response.status_code)
@@ -178,7 +186,7 @@ def get_data():
                     break
             value = soup.find_all("div", class_="_7a3fb80146--value--wcB9F")
             house_material_type = value[index_text].string
-            # print(house_material_type)
+            for_house["house_material_type"] = house_material_type
         if category == "flatSale":
             text = soup.find_all("div", class_="_02712f2b3b--text--EL3wJ")
             index_text = 0
@@ -189,7 +197,9 @@ def get_data():
                     break
             value = soup.find_all("div", class_="_02712f2b3b--value--wcB9F")
             house_material_type = value[index_text].string
-            # print(house_material_type)
+            for_house["house_material_type"] = house_material_type
+
+        add_to_db(for_object, for_house)
 
 
 def main():
