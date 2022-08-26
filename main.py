@@ -160,7 +160,7 @@ def get_data():
             soup = BeautifulSoup(response.text, "lxml")
 
             # house_material_type
-            if category == "newBuildingFlatSale":
+            if soup.find_all("div", class_="_7a3fb80146--text--EL3wJ"):
                 text = soup.find_all("div", class_="_7a3fb80146--text--EL3wJ")
                 index_text = 0
                 for item in text:
@@ -171,7 +171,7 @@ def get_data():
                 value = soup.find_all("div", class_="_7a3fb80146--value--wcB9F")
                 house_material_type = value[index_text].string
                 for_house["house_material_type"] = house_material_type
-            if category == "flatSale":
+            elif soup.find_all("div", class_="_02712f2b3b--text--EL3wJ"):
                 text = soup.find_all("div", class_="_02712f2b3b--text--EL3wJ")
                 index_text = 0
                 for item in text:
