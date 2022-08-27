@@ -75,8 +75,8 @@ def collect_url(url):
         driver.quit()
 
 
-def get_data():
-    with open("2022-08-25.txt", encoding="utf-8") as file:
+def get_data(name_file):
+    with open(f"{name_file}.txt", encoding="utf-8") as file:
         list_position = file.read().splitlines()
     for url in list_position:
         try:
@@ -90,7 +90,7 @@ def get_data():
 
                 response = connection.get(url)
                 print(response.status_code)
-                time.sleep(2)
+                time.sleep(1)
                 soup = BeautifulSoup(response.text, "lxml")
 
                 for_object = {}
@@ -189,11 +189,25 @@ def get_data():
 
 
 def main():
-    # collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-novostroyki/")
-
-    # collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-vtorichka/")
-    get_data()
-    # https://novosibirsk.cian.ru/kupit-kvartiru/
+    while True:
+        print("Введите 1 для сбора списка urls объявлений, список будет сохранен в файл с текущей датой")
+        print("Введите 2 для заполнения БД из объвляений, добавленных в список urls")
+        answer = input()
+        if answer == "1":
+            collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-novostroyki/")
+            collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-vtorichka/")
+            break
+        if answer == "2":
+            while True:
+                print(
+                    "Введите название файла без расширения со списком urls. Файл должен находиться в той же папке, что и main.py")
+                name_file = input()
+                if name_file.split('.')[-1] == "txt":
+                    print("Название необходимо ввести без расширения")
+                if name_file:
+                    get_data(name_file)
+                    break
+            break
 
 
 if __name__ == "__main__":

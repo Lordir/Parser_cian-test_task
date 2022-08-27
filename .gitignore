@@ -1,5 +1,6 @@
-*.xlsx
-*.docx
-*.exe
+/*.xlsx
+/*.docx
+/*.exe
 old.py
-*.txt
+/*.txt
+!requirements.txt
