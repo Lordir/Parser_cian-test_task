@@ -156,8 +156,11 @@ def get_data(name_file):
                 for_house["location"] = location
 
                 # year_house
-                year_house = soup.find("span", class_="a10a3f92e9--status--PGvAt")
-                for_house["year_house"] = int(year_house.string.split()[-1])
+                if soup.find("span", class_="a10a3f92e9--status--PGvAt"):
+                    year_house = soup.find("span", class_="a10a3f92e9--status--PGvAt")
+                    for_house["year_house"] = int(year_house.string.split()[-1])
+                else:
+                    for_house["year_house"] = 0
 
                 # url house
                 if soup.find("a", class_="a10a3f92e9--link--ulbh5 a10a3f92e9--link--hZEYa"):
@@ -190,7 +193,8 @@ def get_data(name_file):
                         value = soup.find_all("div", class_="_02712f2b3b--value--wcB9F")
                         house_material_type = value[index_text].string
                         for_house["house_material_type"] = house_material_type
-
+                else:
+                    for_house["house_material_type"] = "unknown"
                 add_to_db(for_object, for_house)
         except:
             continue
