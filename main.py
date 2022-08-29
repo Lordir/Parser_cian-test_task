@@ -11,7 +11,7 @@ from decimal import Decimal
 from work_with_bd import add_to_db
 
 
-def collect_url(url):
+def collect_url(url, region):
     driver = undetected_chromedriver.Chrome()
     driver.maximize_window()
     try:
@@ -44,7 +44,7 @@ def collect_url(url):
                 find_href = item.find_element(By.CLASS_NAME, "_93444fe79c--link--eoxce")
                 href = find_href.get_attribute("href")
                 list_urls.append(href)
-            with open(f"{datetime.date.today()}.txt", "a", encoding="utf-8") as file:
+            with open(f"{datetime.date.today()}-{region}.txt", "a", encoding="utf-8") as file:
                 for i in list_urls:
                     file.write(f"{i}\n")
             original_window = driver.current_window_handle
@@ -56,6 +56,10 @@ def collect_url(url):
                 url2 = f"https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p={1 + page_number}&region=4897"
             if url == "https://novosibirsk.cian.ru/kupit-kvartiru-vtorichka/":
                 url2 = f"https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p={1 + page_number}&region=4897"
+            if url == "https://spb.cian.ru/kupit-kvartiru-novostroyki/":
+                url2 = f"https://spb.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p={1 + page_number}&region=2"
+            if url == "https://spb.cian.ru/kupit-kvartiru-vtorichka/":
+                url2 = f"https://spb.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p={1 + page_number}&region=2"
             try:
                 driver.get(url2)
                 time.sleep(1)
@@ -64,6 +68,9 @@ def collect_url(url):
             page_number += 1
             if driver.current_url == "https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p=1&region=4897" \
                     or driver.current_url == "https://novosibirsk.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p=1&region=4897":
+                last_page = True
+            if driver.current_url == "https://spb.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=2&offer_type=flat&p=1&region=2" \
+                    or driver.current_url == "https://spb.cian.ru/cat.php?deal_type=sale&engine_version=2&object_type%5B0%5D=1&offer_type=flat&p=1&region=2":
                 last_page = True
             if last_page:
                 print("Last page")
@@ -153,35 +160,36 @@ def get_data(name_file):
                 for_house["year_house"] = int(year_house.string.split()[-1])
 
                 # url house
-                url_house = soup.find("a", class_="a10a3f92e9--link--ulbh5 a10a3f92e9--link--hZEYa").get("href")
+                if soup.find("a", class_="a10a3f92e9--link--ulbh5 a10a3f92e9--link--hZEYa"):
+                    url_house = soup.find("a", class_="a10a3f92e9--link--ulbh5 a10a3f92e9--link--hZEYa").get("href")
 
-                response = connection.get(url_house)
-                print(response.status_code)
-                soup = BeautifulSoup(response.text, "lxml")
+                    response = connection.get(url_house)
+                    print(response.status_code)
+                    soup = BeautifulSoup(response.text, "lxml")
 
-                # house_material_type
-                if soup.find_all("div", class_="_7a3fb80146--text--EL3wJ"):
-                    text = soup.find_all("div", class_="_7a3fb80146--text--EL3wJ")
-                    index_text = 0
-                    for item in text:
-                        span = item.find("span")
-                        if span.string == "Тип дома":
-                            index_text = text.index(item)
-                            break
-                    value = soup.find_all("div", class_="_7a3fb80146--value--wcB9F")
-                    house_material_type = value[index_text].string
-                    for_house["house_material_type"] = house_material_type
-                elif soup.find_all("div", class_="_02712f2b3b--text--EL3wJ"):
-                    text = soup.find_all("div", class_="_02712f2b3b--text--EL3wJ")
-                    index_text = 0
-                    for item in text:
-                        span = item.find("span")
-                        if span.string == "Тип дома":
-                            index_text = text.index(item)
-                            break
-                    value = soup.find_all("div", class_="_02712f2b3b--value--wcB9F")
-                    house_material_type = value[index_text].string
-                    for_house["house_material_type"] = house_material_type
+                    # house_material_type
+                    if soup.find_all("div", class_="_7a3fb80146--text--EL3wJ"):
+                        text = soup.find_all("div", class_="_7a3fb80146--text--EL3wJ")
+                        index_text = 0
+                        for item in text:
+                            span = item.find("span")
+                            if span.string == "Тип дома":
+                                index_text = text.index(item)
+                                break
+                        value = soup.find_all("div", class_="_7a3fb80146--value--wcB9F")
+                        house_material_type = value[index_text].string
+                        for_house["house_material_type"] = house_material_type
+                    elif soup.find_all("div", class_="_02712f2b3b--text--EL3wJ"):
+                        text = soup.find_all("div", class_="_02712f2b3b--text--EL3wJ")
+                        index_text = 0
+                        for item in text:
+                            span = item.find("span")
+                            if span.string == "Тип дома":
+                                index_text = text.index(item)
+                                break
+                        value = soup.find_all("div", class_="_02712f2b3b--value--wcB9F")
+                        house_material_type = value[index_text].string
+                        for_house["house_material_type"] = house_material_type
 
                 add_to_db(for_object, for_house)
         except:
@@ -194,8 +202,20 @@ def main():
         print("Введите 2 для заполнения БД из объвляений, добавленных в список urls")
         answer = input()
         if answer == "1":
-            collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-novostroyki/")
-            collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-vtorichka/")
+            while True:
+                print("Выберите регион:")
+                print("Введите 1 для выбора Новосибирска, 2 для Санкт-Петербурга")
+                answer2 = input()
+                if answer2 == "1":
+                    region = "nsk"
+                    collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-novostroyki/", region)
+                    collect_url("https://novosibirsk.cian.ru/kupit-kvartiru-vtorichka/", region)
+                    break
+                if answer2 == "2":
+                    region = "spb"
+                    collect_url("https://spb.cian.ru/kupit-kvartiru-novostroyki/", region)
+                    collect_url("https://spb.cian.ru/kupit-kvartiru-vtorichka/", region)
+                    break
             break
         if answer == "2":
             while True:
