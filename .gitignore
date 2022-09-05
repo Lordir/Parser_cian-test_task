@@ -4,3 +4,4 @@
 old.py
 /*.txt
 !requirements.txt
+cookies

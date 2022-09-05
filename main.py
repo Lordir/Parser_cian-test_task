@@ -1,4 +1,5 @@
 import datetime
+import pickle
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -200,10 +201,39 @@ def get_data(name_file):
             continue
 
 
+def test():
+    url = "https://novosibirsk.cian.ru/kupit-kvartiru-novostroyki/"
+    driver = undetected_chromedriver.Chrome()
+    driver.maximize_window()
+
+    try:
+        driver.get(url=url)
+        time.sleep(3)
+        for cookie in pickle.load(open("cookies", "rb")):
+            driver.add_cookie(cookie)
+        driver.implicitly_wait(1)
+        driver.refresh()
+        time.sleep(3)
+        for i in range(10):
+            full_block = driver.find_element(By.CLASS_NAME, "_93444fe79c--wrapper--W0WqH")
+            # print(full_block.text)
+            buttons = full_block.find_elements(By.CLASS_NAME, "_93444fe79c--cont--qEPRO")
+            buttons[2].click()
+            driver.implicitly_wait(2)
+        # print(buttons[2].text)
+
+    except Exception as ex:
+        print(ex)
+    finally:
+        driver.close()
+        driver.quit()
+
+
 def main():
     while True:
         print("Введите 1 для сбора списка urls объявлений, список будет сохранен в файл с текущей датой")
         print("Введите 2 для заполнения БД из объвляений, добавленных в список urls")
+        print("Введите 3 для сохрания cookie")
         answer = input()
         if answer == "1":
             while True:
@@ -231,6 +261,23 @@ def main():
                 if name_file:
                     get_data(name_file)
                     break
+            break
+        if answer == "3":
+            url = "https://novosibirsk.cian.ru/"
+            driver = undetected_chromedriver.Chrome()
+            driver.maximize_window()
+            try:
+                driver.get(url=url)
+                time.sleep(60)
+                pickle.dump(driver.get_cookies(), open("cookies", "wb"))
+            except Exception as ex:
+                print(ex)
+            finally:
+                driver.close()
+                driver.quit()
+            break
+        if answer == "4":
+            test()
             break
 
 
